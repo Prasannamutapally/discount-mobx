@@ -9,9 +9,6 @@ import { FaDollarSign } from "react-icons/fa";
 import "./App.css";
 
 const App: React.FC = observer(() => {
-  useEffect(() => {
-    // No need to call store.calculateDiscountedPrices() here
-  }, []);
 
   const handleChangePriceOption = (
     event: React.ChangeEvent<HTMLSelectElement>
