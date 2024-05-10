@@ -1,9 +1,7 @@
 .discount-calculator {
-  font-family: Arial, sans-serif;
   padding: 20px;
   display: flex;
   flex-direction: column;
-  align-items: center;
   min-height: 100vh;
   background-color: rgba(28, 40, 84, 1);
   box-sizing: border-box;
@@ -22,9 +20,9 @@
 }
 
 table {
-  width: 100%;
+  width: 80%;
   border-collapse: collapse;
-  margin-bottom: 40px;
+  margin-bottom: 20px;
 }
 
 th,
@@ -48,40 +46,95 @@ button {
   cursor: pointer;
 }
 
-button:hover {
-  color: red;
+.title {
+  color: white;
+  font-family: roboto;
+  margin-bottom: 50px;
 }
 
-.fa-times {
-  color: red;
-}
-
-@media (prefers-reduced-motion: no-preference) {
-  .App-logo {
-    animation: App-logo-spin infinite 20s linear;
-  }
-}
-
-.App-header {
-  background-color: #282c34;
-  min-height: 100vh;
+.input-label {
   display: flex;
-  flex-direction: column;
   align-items: center;
-  justify-content: center;
-  font-size: calc(10px + 2vmin);
+  width: 50%;
   color: white;
 }
 
-.App-link {
-  color: #61dafb;
+.info-icon {
+  color: white;
 }
 
-@keyframes App-logo-spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
+.dropdown {
+  width: 50%;
+  height: 60%;
+  border: none;
+  outline: none;
+}
+
+.button-container {
+  display: flex;
+  width:80%;
+  justify-content: flex-end;
+}
+
+.add-row-button {
+  color: rgba(28, 40, 84, 1);
+  display: flex;
+  align-items: center;
+  padding: 6px 14px;
+  background-color: white;
+  border-radius: 5px;
+  font-weight: 600;
+  font-family: roboto;
+  font-size: 15px;
+  margin-bottom: 10px;
+  margin-left: 20px;
+}
+
+.add-icon {
+  margin-right: 5px;
+}
+
+.red-price {
+  color: red;
+  font-weight: 500;
+}
+
+.green-price {
+  color: green;
+  font-weight: 500;
+}
+
+.white-price {
+  color: white;
+}
+
+.last-input,
+.discount-input {
+  outline: none;
+}
+
+.close-icon {
+  color: white;
+}
+
+.error {
+  border: 2px solid red;
+}
+
+.error-message {
+  color: red;
+}
+
+.success {
+  color: greenyellow;
+  font-size: "20px";
+  font-family: "roboto";
+  font-weight: 600;
+  margin: 0;
+  margin-right: 30px;
+  margin-bottom: 15px;
+}
+
+.p {
+  color: white;
 }

@@ -1,28 +1,34 @@
-import React, { useEffect } from "react";
+import React, { useState } from "react";
 import { observer } from "mobx-react-lite";
-import { RowData, store } from "./DiscountStore";
-import { action } from "mobx";
+import { store, RowData } from "./DiscountStore";
 import { IoIosInformationCircleOutline } from "react-icons/io";
 import { RiAddLine } from "react-icons/ri";
 import { AiOutlineClose } from "react-icons/ai";
-import { FaDollarSign } from "react-icons/fa";
 import "./App.css";
 
 const App: React.FC = observer(() => {
+  const [errors, setErrors] = useState<number[]>([]);
+  const [success, setSuccess] = useState<string>("");
+  const [priceError, setPriceError] = useState<any>("");
+  const [totalOriginalCost, setTotalOriginalCost] = useState<number>(0);
+  const [totalDiscountedPrice, setTotalDiscountedPrice] = useState<number>(0);
 
   const handleChangePriceOption = (
     event: React.ChangeEvent<HTMLSelectElement>
   ) => {
-    store.priceOption = event.target.value;
+    store.data.priceOption = event.target.value;
   };
 
   const handleChangePrice = (event: React.ChangeEvent<HTMLInputElement>) => {
     const inputValue = event.target.value;
     const newPrice = parseFloat(inputValue);
     if (!isNaN(newPrice)) {
-      store.price = newPrice;
+      store.data.price = newPrice;
+      if (priceError) {
+        setPriceError(false);
+      }
     } else {
-      store.price = 0;
+      store.data.price = 0;
     }
   };
 
@@ -48,36 +54,125 @@ const App: React.FC = observer(() => {
     }
   };
 
-  return (
-    <div className="discount-calculator">
-      <h1
-        style={{ color: "white", fontFamily: "roboto", marginBottom: "100px" }}
-      >
-        Discount calculator
-      </h1>
+  const handleSubmit = () => {
+    if (store.data.price === 0) {
+      setPriceError(true);
+    } else {
+      setPriceError(false);
+      validateRows();
+    }
+  };
+
+  const validateRows = () => {
+    const invalidRows: number[] = [];
+    store.data.rows.forEach((row, index) => {
+      if (row.last <= row.first) {
+        invalidRows.push(index);
+      }
+    });
+    if (invalidRows.length > 0) {
+      setErrors(invalidRows);
+    } else {
+      setSuccess("Data Submitted successfully");
+      calculateTotals();
+      setErrors([]);
+    }
+  };
+
+  const calculateTotals = () => {
+    let totalOriginal = 0;
+    let totalDiscounted = 0;
+    store.calculateDiscountedPrices.forEach((row) => {
+      totalOriginal += row.originalPrice;
+      totalDiscounted += row.discountedPrice;
+    });
+    setTotalOriginalCost(totalOriginal);
+    setTotalDiscountedPrice(totalDiscounted);
+  };
+
+  const renderTable = () => {
+    return (
+      <table>
+        <thead>
+          <tr>
+            <th>First</th>
+            <th>Last</th>
+            <th>Total Units</th>
+            <th>Discount Percentage (%)</th>
+            <th>Original Price</th>
+            <th>Discounted Price</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          {store.calculateDiscountedPrices.map((row: any, index: any) => (
+            <tr key={index}>
+              <td>{row.first}</td>
+              <td>
+                <input
+                  type="text"
+                  value={row.last === Infinity ? "Infinite" : row.last}
+                  onChange={(e) => handleInputChange(index, "last", e)}
+                  className={
+                    errors.includes(index) ? "last-input error" : "last-input"
+                  }
+                  readOnly={row.last === Infinity}
+                />
+              </td>
+              <td>{row.units}</td>
+              <td>
+                <input
+                  type="text"
+                  value={row.discountPercentage}
+                  onChange={(e) =>
+                    handleInputChange(index, "discountPercentage", e)
+                  }
+                  className="discount-input"
+                />
+              </td>
+              <td
+                className={
+                  row.originalPrice > row.discountedPrice
+                    ? "red-price"
+                    : "white-price"
+                }
+              >
+                {row.originalPrice}
+              </td>
+              <td
+                className={
+                  row.discountedPrice < row.originalPrice
+                    ? "green-price"
+                    : "white-price"
+                }
+              >
+                {row.discountedPrice}
+              </td>
+              <td>
+                {index > 0 && (
+                  <button onClick={() => handleDeleteRow(index)}>
+                    <AiOutlineClose className="close-icon" />
+                  </button>
+                )}
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    );
+  };
+
+  const renderPricingContainer = () => {
+    return (
       <div className="pricing-container">
         <div className="input-container">
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              width: "50%",
-            }}
-          >
-            <label style={{ marginRight: "5px", color: "white" }}>
-              Select Pricing option:
-            </label>
-            <IoIosInformationCircleOutline style={{ color: "white" }} />
+          <div className="input-label">
+            <label>Select Pricing option:</label>
+            <IoIosInformationCircleOutline className="info-icon" />
           </div>
           <select
-            value={store.priceOption}
+            value={store.data.priceOption}
             onChange={handleChangePriceOption}
-            style={{
-              width: "50%",
-              height: "60%",
-              border: "none",
-              outline: "none",
-            }}
             className="dropdown"
           >
             <option value="volume">Volume</option>
@@ -85,131 +180,77 @@ const App: React.FC = observer(() => {
           </select>
         </div>
         <div className="input-container">
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              width: "50%",
-            }}
-          >
-            <label style={{ marginRight: "5px", color: "white" }}>
-              Enter Price (USD)
-            </label>
-            <IoIosInformationCircleOutline style={{ color: "white" }} />
+          <div className="input-label">
+            <label>Enter Price (USD)</label>
+            <IoIosInformationCircleOutline className="info-icon" />
           </div>
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              width: "50%",
-              height: "60%",
-              border: "1px solid #ccc",
-            }}
-          >
-            <FaDollarSign
-              style={{ color: "white", height: "15px", marginLeft: "5px" }}
-            />
-            <input
-              type="text"
-              value={store.price.toString()}
-              onChange={handleChangePrice}
-              style={{
-                border: "none",
-                flex: 1,
-                marginLeft: "5px",
-                outline: "none",
-                height: "100%",
-              }}
-            />
-          </div>
+          <input
+            type="text"
+            value={store.data.price.toString()}
+            onChange={handleChangePrice}
+            className={priceError ? "dropdown error" : "dropdown"}
+          />
         </div>
       </div>
-      <div style={{ display: "flex", flexDirection: "column" }}>
-        <button
-          onClick={handleAddRow}
-          style={{
-            color: "rgba(28, 40, 84, 1)",
-            display: "flex",
-            alignItems: "center",
-            padding: "6px 14px",
-            backgroundColor: "white",
-            borderRadius: "5px",
-            alignSelf: "flex-end",
-            fontWeight: "600",
-            fontFamily: "roboto",
-            fontSize: "15px",
-            marginBottom: "10px",
-          }}
-        >
-          <RiAddLine style={{ marginRight: "5px" }} /> Add row
+    );
+  };
+
+  const renderButtons=()=>{
+    return (
+      <div className="button-container">
+        <button onClick={handleAddRow} className="add-row-button">
+          <RiAddLine className="add-icon" /> Add row
         </button>
-        <table>
-          <thead>
-            <tr>
-              <th>First</th>
-              <th>Last</th>
-              <th>Total Units</th>
-              <th>Discount Percentage (%)</th>
-              <th>Original Price</th>
-              <th>Discounted Price</th>
-              <th></th>
-            </tr>
-          </thead>
-          <tbody>
-            {store.calculateDiscountedPrices.map((row, index) => (
-              <tr key={index}>
-                <td>{row.first}</td>
-                <td>
-                  <input
-                    type="text"
-                    value={row.last}
-                    onChange={(e) => handleInputChange(index, "last", e)}
-                    style={{ outline: "none" }}
-                  />
-                </td>
-                <td>{row.units}</td>
-                <td>
-                  <input
-                    type="text"
-                    value={row.discountPercentage}
-                    onChange={(e) =>
-                      handleInputChange(index, "discountPercentage", e)
-                    }
-                    style={{ outline: "none" }}
-                  />
-                </td>
-                <td
-                  style={{
-                    color:
-                      row.originalPrice > row.discountedPrice ? "red" : "white",
-                    fontWeight: "500",
-                  }}
-                >
-                  {row.originalPrice}
-                </td>
-                <td
-                  style={{
-                    color:
-                      row.discountedPrice < row.originalPrice
-                        ? "green"
-                        : "white",
-                    fontWeight: "500",
-                  }}
-                >
-                  {row.discountedPrice}
-                </td>
-                <td>
-                  {index > 0 && (
-                    <button onClick={() => handleDeleteRow(index)}>
-                      <AiOutlineClose style={{ color: "white" }} />
-                    </button>
-                  )}
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+        <button onClick={handleSubmit} className="add-row-button">
+          Submit
+        </button>
       </div>
+    );
+  }
+
+  return (
+    <div className="discount-calculator">
+      <h1 className="title">Discount calculator</h1>
+      {renderPricingContainer()}
+      {renderButtons()}
+      {renderTable()}
+      {success && (
+        <>
+          <p className="success">{success}</p>
+          <div style={{ display: "flex", alignItems: "center" }}>
+            <p className="success p">
+              {" "}
+              Original price:{" "}
+              <span
+                className={
+                  totalOriginalCost > totalDiscountedPrice
+                    ? "error-message"
+                    : totalOriginalCost === totalDiscountedPrice
+                    ? "p"
+                    : "success"
+                }
+              >
+                {totalOriginalCost}
+              </span>
+            </p>
+            <p className="success p">
+              Discounted price:{" "}
+              <span
+                className={
+                  totalOriginalCost < totalDiscountedPrice
+                    ? "error-message"
+                    : totalOriginalCost === totalDiscountedPrice
+                    ? "p"
+                    : "success"
+                }
+              >
+                {totalDiscountedPrice}
+              </span>
+            </p>
+          </div>
+        </>
+      )}
+      {priceError && <span className="error-message">Please enter price</span>}
     </div>
   );
 });

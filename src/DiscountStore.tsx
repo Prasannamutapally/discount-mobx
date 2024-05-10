@@ -1,3 +1,4 @@
+// DiscountStore.ts
 import { makeObservable, observable, action, computed } from "mobx";
 
 export interface RowData {
@@ -5,29 +6,25 @@ export interface RowData {
   last: number;
   units: number;
   discountPercentage: number;
-  originalPrice: number;
-  discountedPrice: number;
 }
 
 export class DiscountCalculatorStore {
-  priceOption: string = "volume";
-  price: number = 0;
-  rows: RowData[] = [
-    {
-      first: 1,
-      last: 1,
-      units: 1,
-      discountPercentage: 0,
-      originalPrice: 0,
-      discountedPrice: 0,
-    },
-  ];
+  data = {
+    priceOption: "volume" as string,
+    price: 0,
+    rows: [
+      {
+        first: 1,
+        last: Infinity,
+        units: 1,
+        discountPercentage: 0,
+      },
+    ] as RowData[],
+  };
 
   constructor() {
     makeObservable(this, {
-      priceOption: observable,
-      price: observable,
-      rows: observable,
+      data: observable,
       addRow: action,
       deleteRow: action,
       updateRow: action,
@@ -36,35 +33,49 @@ export class DiscountCalculatorStore {
     });
   }
 
-  addRow = () => {
-    const lastRow = this.rows[this.rows.length - 1];
+  addRow() {
+    const lastRow = this.data.rows[this.data.rows.length - 1];
     const first = lastRow ? lastRow.last + 1 : 1;
-    const newRow: RowData = {
-      first,
-      last: first,
+    if (lastRow) {
+      lastRow.last = lastRow.first + 1;
+    }
+    this.data.rows.push({
+      first: lastRow?.first + 2 ?? 1,
+      last: Infinity,
       units: 1,
       discountPercentage: 0,
-      originalPrice: 0,
-      discountedPrice: 0,
-    };
-    this.rows.push(newRow);
-  };
+    });
+  }
 
-  deleteRow = (index: number) => {
-    this.rows.splice(index, 1);
-  };
+  deleteRow(index: number) {
+    if (index < this.data.rows.length-1) {
+      const prevRow = this.data.rows[index - 1];
+      const nextRow = this.data.rows[index + 1];
+      this.data.rows.splice(index, 1);
+      if (prevRow && nextRow) {
+        nextRow.first = prevRow.last + 1;
+      }
+    } else {
+      const prevRow = this.data.rows[index - 1];
+      this.data.rows.splice(index, 1);
+      prevRow.last = Infinity;
+    }
+  }
 
-  updateRow = (index: number, key: keyof RowData, value: any) => {
-    this.rows[index][key] = value;
-  };
+  updateRow(index: number, key: keyof RowData, value: any) {
+    this.data.rows[index][key] = value;
+    if (key === "last") {
+      this.data.rows[index + 1]["first"] = value + 1;
+    }
+  }
 
   get totalUnits() {
-    return this.rows.reduce((total, row) => total + row.units, 0);
+    return this.data.rows.reduce((total, row) => total + row.units, 0);
   }
 
   get calculateDiscountedPrices() {
-    const { priceOption, price } = this;
-    return this.rows.map((row) => {
+    const { priceOption, price } = this.data;
+    return this.data.rows.map((row) => {
       const units = row.last - row.first + 1;
       const originalPrice = priceOption === "volume" ? price : price * units;
       const discountedPrice =
