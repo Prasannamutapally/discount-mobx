@@ -1,4 +1,3 @@
-// DiscountStore.ts
 import { makeObservable, observable, action, computed } from "mobx";
 
 export interface RowData {
@@ -35,7 +34,6 @@ export class DiscountCalculatorStore {
 
   addRow() {
     const lastRow = this.data.rows[this.data.rows.length - 1];
-    const first = lastRow ? lastRow.last + 1 : 1;
     if (lastRow) {
       lastRow.last = lastRow.first + 1;
     }
@@ -48,7 +46,7 @@ export class DiscountCalculatorStore {
   }
 
   deleteRow(index: number) {
-    if (index < this.data.rows.length-1) {
+    if (index < this.data.rows.length - 1) {
       const prevRow = this.data.rows[index - 1];
       const nextRow = this.data.rows[index + 1];
       this.data.rows.splice(index, 1);
@@ -75,11 +73,17 @@ export class DiscountCalculatorStore {
 
   get calculateDiscountedPrices() {
     const { priceOption, price } = this.data;
+
     return this.data.rows.map((row) => {
       const units = row.last - row.first + 1;
-      const originalPrice = priceOption === "volume" ? price : price * units;
-      const discountedPrice =
+
+      let originalPrice = priceOption === "volume" ? price : price * units;
+      originalPrice = parseFloat(originalPrice.toFixed(2));
+
+      let discountedPrice =
         originalPrice - (originalPrice * row.discountPercentage) / 100;
+      discountedPrice = parseFloat(discountedPrice.toFixed(2));
+
       return {
         ...row,
         units,

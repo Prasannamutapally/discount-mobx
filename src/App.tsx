@@ -1,10 +1,33 @@
 import React, { useState } from "react";
 import { observer } from "mobx-react-lite";
 import { store, RowData } from "./DiscountStore";
-import { IoIosInformationCircleOutline } from "react-icons/io";
 import { RiAddLine } from "react-icons/ri";
 import { AiOutlineClose } from "react-icons/ai";
-import "./App.css";
+import * as Styled from "./StyledComponents";
+
+const {
+  DiscountCalculator,
+  PricingContainer,
+  InputContainer,
+  InputLabel,
+  InfoIcon,
+  Dropdown,
+  ButtonContainer,
+  AddRowButton,
+  Input,
+  ErrorMessage,
+  SuccessMessage,
+  P,
+  Table,
+  H1,
+  Th,
+  CloseButton,
+  PriceInput,
+  Td,
+  OriginalPriceTd,
+  DiscountPriceTd,
+  LastTd,
+} = Styled;
 
 const App: React.FC = observer(() => {
   const [errors, setErrors] = useState<number[]>([]);
@@ -38,6 +61,7 @@ const App: React.FC = observer(() => {
 
   const handleDeleteRow = (index: number) => {
     store.deleteRow(index);
+    setErrors([]);
   };
 
   const handleInputChange = (
@@ -92,166 +116,124 @@ const App: React.FC = observer(() => {
 
   const renderTable = () => {
     return (
-      <table>
+      <Table>
         <thead>
           <tr>
-            <th>First</th>
-            <th>Last</th>
-            <th>Total Units</th>
-            <th>Discount Percentage (%)</th>
-            <th>Original Price</th>
-            <th>Discounted Price</th>
-            <th></th>
+            <Th>First</Th>
+            <Th>Last</Th>
+            <Th>Total Units</Th>
+            <Th>Discount Percentage (%)</Th>
+            <Th>Original Price</Th>
+            <Th>Discounted Price</Th>
+            <Th></Th>
           </tr>
         </thead>
         <tbody>
           {store.calculateDiscountedPrices.map((row: any, index: any) => (
             <tr key={index}>
-              <td>{row.first}</td>
-              <td>
-                <input
+              <Td>{row.first}</Td>
+              <LastTd isError={errors.includes(index)}>
+                <Input
                   type="text"
                   value={row.last === Infinity ? "Infinite" : row.last}
                   onChange={(e) => handleInputChange(index, "last", e)}
-                  className={
-                    errors.includes(index) ? "last-input error" : "last-input"
-                  }
                   readOnly={row.last === Infinity}
                 />
-              </td>
-              <td>{row.units}</td>
-              <td>
-                <input
+              </LastTd>
+              <Td>{row.units}</Td>
+              <Td>
+                <Input
                   type="text"
                   value={row.discountPercentage}
                   onChange={(e) =>
                     handleInputChange(index, "discountPercentage", e)
                   }
-                  className="discount-input"
                 />
-              </td>
-              <td
-                className={
-                  row.originalPrice > row.discountedPrice
-                    ? "red-price"
-                    : "white-price"
-                }
+              </Td>
+              <OriginalPriceTd
+                originalPrice={row.originalPrice}
+                discountedPrice={row.discountedPrice}
               >
                 {row.originalPrice}
-              </td>
-              <td
-                className={
-                  row.discountedPrice < row.originalPrice
-                    ? "green-price"
-                    : "white-price"
-                }
+              </OriginalPriceTd>
+              <DiscountPriceTd
+                originalPrice={row.originalPrice}
+                discountedPrice={row.discountedPrice}
               >
                 {row.discountedPrice}
-              </td>
-              <td>
+              </DiscountPriceTd>
+              <Td>
                 {index > 0 && (
-                  <button onClick={() => handleDeleteRow(index)}>
-                    <AiOutlineClose className="close-icon" />
-                  </button>
+                  <CloseButton onClick={() => handleDeleteRow(index)}>
+                    <AiOutlineClose />
+                  </CloseButton>
                 )}
-              </td>
+              </Td>
             </tr>
           ))}
         </tbody>
-      </table>
+      </Table>
     );
   };
 
   const renderPricingContainer = () => {
     return (
-      <div className="pricing-container">
-        <div className="input-container">
-          <div className="input-label">
+      <PricingContainer>
+        <InputContainer>
+          <InputLabel>
             <label>Select Pricing option:</label>
-            <IoIosInformationCircleOutline className="info-icon" />
-          </div>
-          <select
+            <InfoIcon />
+          </InputLabel>
+          <Dropdown
             value={store.data.priceOption}
             onChange={handleChangePriceOption}
-            className="dropdown"
           >
             <option value="volume">Volume</option>
             <option value="each">Each Unit</option>
-          </select>
-        </div>
-        <div className="input-container">
-          <div className="input-label">
+          </Dropdown>
+        </InputContainer>
+        <InputContainer>
+          <InputLabel>
             <label>Enter Price (USD)</label>
-            <IoIosInformationCircleOutline className="info-icon" />
-          </div>
-          <input
+            <InfoIcon />
+          </InputLabel>
+          <PriceInput
             type="text"
             value={store.data.price.toString()}
             onChange={handleChangePrice}
-            className={priceError ? "dropdown error" : "dropdown"}
+            priceError={priceError}
           />
-        </div>
-      </div>
+        </InputContainer>
+      </PricingContainer>
     );
   };
 
-  const renderButtons=()=>{
+  const renderButtons = () => {
     return (
-      <div className="button-container">
-        <button onClick={handleAddRow} className="add-row-button">
-          <RiAddLine className="add-icon" /> Add row
-        </button>
-        <button onClick={handleSubmit} className="add-row-button">
-          Submit
-        </button>
-      </div>
+      <ButtonContainer>
+        <AddRowButton onClick={handleAddRow}>
+          <RiAddLine /> Add row
+        </AddRowButton>
+        <AddRowButton onClick={handleSubmit}>Submit</AddRowButton>
+      </ButtonContainer>
     );
-  }
+  };
 
   return (
-    <div className="discount-calculator">
-      <h1 className="title">Discount calculator</h1>
+    <DiscountCalculator>
+      <H1>Discount calculator</H1>
       {renderPricingContainer()}
       {renderButtons()}
       {renderTable()}
       {success && (
         <>
-          <p className="success">{success}</p>
-          <div style={{ display: "flex", alignItems: "center" }}>
-            <p className="success p">
-              {" "}
-              Original price:{" "}
-              <span
-                className={
-                  totalOriginalCost > totalDiscountedPrice
-                    ? "error-message"
-                    : totalOriginalCost === totalDiscountedPrice
-                    ? "p"
-                    : "success"
-                }
-              >
-                {totalOriginalCost}
-              </span>
-            </p>
-            <p className="success p">
-              Discounted price:{" "}
-              <span
-                className={
-                  totalOriginalCost < totalDiscountedPrice
-                    ? "error-message"
-                    : totalOriginalCost === totalDiscountedPrice
-                    ? "p"
-                    : "success"
-                }
-              >
-                {totalDiscountedPrice}
-              </span>
-            </p>
-          </div>
+          <SuccessMessage>{success}</SuccessMessage>
+          <P>Original price: {totalOriginalCost}</P>
+          <P>Discounted price: {totalDiscountedPrice}</P>
         </>
       )}
-      {priceError && <span className="error-message">Please enter price</span>}
-    </div>
+      {priceError && <ErrorMessage>Please enter price</ErrorMessage>}
+    </DiscountCalculator>
   );
 });
 
